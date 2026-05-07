@@ -1,17 +1,17 @@
--- Animation.lua: Animated sprite display for DjLust
+-- Animation.lua: Animated sprite display for FishLust
 
 local addonName, addon = ...
 
 -- Animation sprite configs (keyed by animationStyle value)
 local THEMES = {
-    chipi = {
-        texture    = "Interface\\AddOns\\DjLust\\chipi.tga",
+    fish = {
+        texture    = "Interface\\AddOns\\FishLust\\fish.tga",
         frameCount = 4,
         columns    = 2,
         rows       = 2,
     },
     pedro = {
-        texture    = "Interface\\AddOns\\DjLust\\pedrolust.tga",
+        texture    = "Interface\\AddOns\\FishLust\\pedrolust.tga",
         frameCount = 32,
         columns    = 4,
         rows       = 8,
@@ -45,7 +45,7 @@ local ANIM_COOLDOWN = 0.3  -- Minimum time between start/stop calls
 local pendingTimers = {}
 
 -- Create animation frame
-local animFrame = CreateFrame("Frame", "DjLustAnimFrame", UIParent)
+local animFrame = CreateFrame("Frame", "FishLustAnimFrame", UIParent)
 animFrame:SetSize(128, 128)
 animFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 animFrame:Hide()
@@ -65,9 +65,9 @@ animText:Hide()
 
 -- Get current animation style safely
 local function GetCurrentTheme()
-    if not DjLustDB then return "chipi" end
-    local style = DjLustDB.animationStyle or "chipi"
-    if not THEMES[style] then return "chipi" end
+    if not FishLustDB then return "fish" end
+    local style = FishLustDB.animationStyle or "fish"
+    if not THEMES[style] then return "fish" end
     return style
 end
 
@@ -77,14 +77,14 @@ local function UpdateTexture()
     local themeConfig = THEMES[theme]
 
     if not themeConfig then
-        print("|cff00bfff[DjLust]|r |cffff0000ERROR:|r Invalid theme configuration")
+        print("|cff00bfff[FishLust]|r |cffff0000ERROR:|r Invalid theme configuration")
         return false
     end
 
     if themeConfig.isText then
         -- Text theme: hide sprite texture, show FontString
         animTexture:SetTexture(nil)
-        animText:SetText(DjLustDB and DjLustDB.partyText or "PARTY TIME!")
+        animText:SetText(FishLustDB and FishLustDB.partyText or "PARTY TIME!")
         animState.frameCount = 1
         animState.columns    = 1
         animState.rows       = 1
@@ -172,7 +172,7 @@ end
 
 -- Apply the current lock state to the frame (mouse interaction)
 local function ApplyLockState()
-    local locked = DjLustDB and DjLustDB.animationLocked
+    local locked = FishLustDB and FishLustDB.animationLocked
     -- Disable/enable mouse so the frame can't be grabbed when locked
     animFrame:EnableMouse(not locked)
 end
@@ -180,16 +180,16 @@ end
 -- Start animation (WITH MEMORY LEAK FIXES)
 function addon:StartAnimation()
     -- Respect the enable flag set in settings
-    if DjLustDB and DjLustDB.animationStyle == "none" then
-        if printDebug then printDebug("|cff00bfff[DjLust]|r Animation set to None, skipping.") end
+    if FishLustDB and FishLustDB.animationStyle == "none" then
+        if printDebug then printDebug("|cff00bfff[FishLust]|r Animation set to None, skipping.") end
         return
     end
 
     -- DEBOUNCE: Prevent rapid restarts
     local now = GetTime()
     if now - lastAnimStart < ANIM_COOLDOWN then
-        if DjLustDB and DjLustDB.debugMode then
-            print("|cff00bfff[DjLust]|r Animation start blocked - cooldown active")
+        if FishLustDB and FishLustDB.debugMode then
+            print("|cff00bfff[FishLust]|r Animation start blocked - cooldown active")
         end
         return
     end
@@ -206,21 +206,21 @@ function addon:StartAnimation()
     
     -- Update texture
     if not UpdateTexture() then
-        print("|cff00bfff[DjLust]|r |cffff0000ERROR:|r Failed to load animation texture")
+        print("|cff00bfff[FishLust]|r |cffff0000ERROR:|r Failed to load animation texture")
         return
     end
     
     -- Apply saved settings
-    if DjLustDB then
-        if DjLustDB.animationSize then
-            animFrame:SetSize(DjLustDB.animationSize, DjLustDB.animationSize)
+    if FishLustDB then
+        if FishLustDB.animationSize then
+            animFrame:SetSize(FishLustDB.animationSize, FishLustDB.animationSize)
         end
-        if DjLustDB.animationFPS then
-            animState.fps = DjLustDB.animationFPS
+        if FishLustDB.animationFPS then
+            animState.fps = FishLustDB.animationFPS
         end
-        if DjLustDB.animationX and DjLustDB.animationY then
+        if FishLustDB.animationX and FishLustDB.animationY then
             animFrame:ClearAllPoints()
-            animFrame:SetPoint("CENTER", UIParent, "CENTER", DjLustDB.animationX, DjLustDB.animationY)
+            animFrame:SetPoint("CENTER", UIParent, "CENTER", FishLustDB.animationX, FishLustDB.animationY)
         end
     end
     
@@ -234,7 +234,7 @@ function addon:StartAnimation()
     if isTextTheme then
         -- Text theme: show FontString, hide sprite texture, skip ticker
         animTexture:Hide()
-        animText:SetText(DjLustDB and DjLustDB.partyText or "PARTY TIME!")
+        animText:SetText(FishLustDB and FishLustDB.partyText or "PARTY TIME!")
         animText:Show()
     else
         -- Sprite theme: hide text, show texture, start ticker
@@ -250,9 +250,9 @@ function addon:StartAnimation()
     animFrame:SetAlpha(0)
     UIFrameFadeIn(animFrame, 0.3, 0, 1)
 
-    if DjLustDB and DjLustDB.debugMode then
+    if FishLustDB and FishLustDB.debugMode then
         local theme = GetCurrentTheme()
-        print("|cff00bfff[DjLust]|r |cffff1493Animation started!|r (Theme: " .. theme .. ")")
+        print("|cff00bfff[FishLust]|r |cffff1493Animation started!|r (Theme: " .. theme .. ")")
     end
 end
 
@@ -286,8 +286,8 @@ function addon:StopAnimation()
     end)
     table.insert(pendingTimers, hideTimer)
     
-    if DjLustDB and DjLustDB.debugMode then
-        print("|cff00bfff[DjLust]|r |cffff1493Animation stopped!|r")
+    if FishLustDB and FishLustDB.debugMode then
+        print("|cff00bfff[FishLust]|r |cffff1493Animation stopped!|r")
     end
 end
 
@@ -297,8 +297,8 @@ animFrame:EnableMouse(true)
 animFrame:RegisterForDrag("LeftButton")
 animFrame:SetScript("OnDragStart", function(self)
     -- Respect position lock
-    if DjLustDB and DjLustDB.animationLocked then
-        print("|cff00bfff[DjLust]|r Animation position is locked. Uncheck |cffff8800Lock Position|r in Settings to move it.")
+    if FishLustDB and FishLustDB.animationLocked then
+        print("|cff00bfff[FishLust]|r Animation position is locked. Uncheck |cffff8800Lock Position|r in Settings to move it.")
         return
     end
     self:StartMoving()
@@ -313,9 +313,9 @@ animFrame:SetScript("OnDragStop", function(self)
     local pHeight = UIParent:GetHeight()
     local x = (self:GetLeft() + self:GetWidth()  / 2) - pWidth  / 2
     local y = (self:GetBottom() + self:GetHeight() / 2) - pHeight / 2
-    if DjLustDB then
-        DjLustDB.animationX = x
-        DjLustDB.animationY = y
+    if FishLustDB then
+        FishLustDB.animationX = x
+        FishLustDB.animationY = y
     end
     -- Re-anchor cleanly so the frame's internal anchor is always consistent
     self:ClearAllPoints()
@@ -332,7 +332,7 @@ end
 
 -- Live-update the party text while the animation is running
 function addon:UpdatePartyText(text)
-    DjLustDB.partyText = text
+    FishLustDB.partyText = text
     if animState.isPlaying and THEMES[GetCurrentTheme()].isText then
         animText:SetText(text)
     end
@@ -358,15 +358,15 @@ function addon:UpdateAnimationTexture()
 end
 
 -- Lock/unlock animation position
--- Persists via DjLustDB.animationLocked (saved variable)
+-- Persists via FishLustDB.animationLocked (saved variable)
 function addon:SetAnimationLocked(locked)
-    DjLustDB.animationLocked = locked
+    FishLustDB.animationLocked = locked
     ApplyLockState()
 
     if locked then
-        print("|cff00bfff[DjLust]|r Animation position |cffff0000locked|r.")
+        print("|cff00bfff[FishLust]|r Animation position |cffff0000locked|r.")
     else
-        print("|cff00bfff[DjLust]|r Animation position |cff00ff00unlocked|r.")
+        print("|cff00bfff[FishLust]|r Animation position |cff00ff00unlocked|r.")
     end
 end
 
@@ -399,59 +399,59 @@ SlashCmdList["DJLANIM"] = function(msg)
     elseif msg == "unlock" then
         addon:SetAnimationLocked(false)
     elseif msg == "info" then
-        print("|cff00bfff[DjLust Animation] Info:|r")
+        print("|cff00bfff[FishLust Animation] Info:|r")
         print("  Theme:", GetCurrentTheme())
         print("  Frame count:", animState.frameCount)
         print("  Grid:", animState.columns .. "x" .. animState.rows)
         print("  Current frame:", animState.currentFrame)
         print("  FPS:", animState.fps)
         print("  Playing:", animState.isPlaying and "Yes" or "No")
-        print("  Position locked:", (DjLustDB and DjLustDB.animationLocked) and "|cffff0000Yes|r" or "|cff00ff00No|r")
+        print("  Position locked:", (FishLustDB and FishLustDB.animationLocked) and "|cffff0000Yes|r" or "|cff00ff00No|r")
         local theme = THEMES[GetCurrentTheme()]
         print("  Texture:", theme.texture)
         print("  Ticker active:", animState.ticker and "Yes" or "No")
         print("  Pending timers:", #pendingTimers)
     elseif msg == "reset" then
         -- Reset clears the lock so the position can be set freely
-        if DjLustDB and DjLustDB.animationLocked then
-            print("|cff00bfff[DjLust]|r Position was locked - unlocking before reset.")
+        if FishLustDB and FishLustDB.animationLocked then
+            print("|cff00bfff[FishLust]|r Position was locked - unlocking before reset.")
             addon:SetAnimationLocked(false)
         end
         animFrame:ClearAllPoints()
         animFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-        if DjLustDB then
-            DjLustDB.animationX = 0
-            DjLustDB.animationY = 0
+        if FishLustDB then
+            FishLustDB.animationX = 0
+            FishLustDB.animationY = 0
         end
-        print("|cff00bfff[DjLust]|r Animation position reset to center")
+        print("|cff00bfff[FishLust]|r Animation position reset to center")
     elseif msg == "cleanup" then
         CleanupAnimation()
         collectgarbage("collect")
-        print("|cff00bfff[DjLust]|r Animation cleanup complete")
+        print("|cff00bfff[FishLust]|r Animation cleanup complete")
     elseif msg:match("^size") then
         local size = tonumber(msg:match("^size%s+(%d+)"))
         if size and size >= 32 and size <= 512 then
             animFrame:SetSize(size, size)
-            if DjLustDB then
-                DjLustDB.animationSize = size
+            if FishLustDB then
+                FishLustDB.animationSize = size
             end
-            print("|cff00bfff[DjLust]|r Animation size set to " .. size .. "x" .. size)
+            print("|cff00bfff[FishLust]|r Animation size set to " .. size .. "x" .. size)
         else
-            print("|cff00bfff[DjLust]|r Usage: /djlanim size <32-512>")
+            print("|cff00bfff[FishLust]|r Usage: /djlanim size <32-512>")
         end
     elseif msg:match("^fps") then
         local fps = tonumber(msg:match("^fps%s+(%d+)"))
         if fps and fps >= 1 and fps <= 60 then
             addon:UpdateAnimationFPS(fps)
-            if DjLustDB then
-                DjLustDB.animationFPS = fps
+            if FishLustDB then
+                FishLustDB.animationFPS = fps
             end
-            print("|cff00bfff[DjLust]|r Animation FPS set to " .. fps)
+            print("|cff00bfff[FishLust]|r Animation FPS set to " .. fps)
         else
-            print("|cff00bfff[DjLust]|r Usage: /djlanim fps <1-60>")
+            print("|cff00bfff[FishLust]|r Usage: /djlanim fps <1-60>")
         end
     else
-        print("|cff00bfff[DjLust Animation] [HELP]\nAvailable Commands:|r")
+        print("|cff00bfff[FishLust Animation] [HELP]\nAvailable Commands:|r")
         print("  |cffff1493/djlanim start|r - Start animation")
         print("  |cffff1493/djlanim stop|r - Stop animation")
         print("  |cffff1493/djlanim toggle|r - Toggle animation on/off")
@@ -474,16 +474,16 @@ initFrame:SetScript("OnEvent", function(self, event, loadedAddon)
     if event == "ADDON_LOADED" and loadedAddon == addonName then
         UpdateTexture()
         
-        if DjLustDB then
-            if DjLustDB.animationSize then
-                animFrame:SetSize(DjLustDB.animationSize, DjLustDB.animationSize)
+        if FishLustDB then
+            if FishLustDB.animationSize then
+                animFrame:SetSize(FishLustDB.animationSize, FishLustDB.animationSize)
             end
-            if DjLustDB.animationFPS then
-                animState.fps = DjLustDB.animationFPS
+            if FishLustDB.animationFPS then
+                animState.fps = FishLustDB.animationFPS
             end
-            if DjLustDB.animationX and DjLustDB.animationY then
+            if FishLustDB.animationX and FishLustDB.animationY then
                 animFrame:ClearAllPoints()
-                animFrame:SetPoint("CENTER", UIParent, "CENTER", DjLustDB.animationX, DjLustDB.animationY)
+                animFrame:SetPoint("CENTER", UIParent, "CENTER", FishLustDB.animationX, FishLustDB.animationY)
             end
             -- Restore persisted lock state on load
             ApplyLockState()

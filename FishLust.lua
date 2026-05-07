@@ -1,22 +1,13 @@
--- DjLust: Production version with music!
--- Detects Bloodlust (and similar spells) via aura detection and plays music
--- v1.2.0: Detection via issecretvalue() guard on UNIT_AURA addedAuras (ported from BudgetPedro)
-
 local addonName, addon = ...
 
--- Sated-type debuff IDs. In 12.0.5 aura spellIds may be secret values that
--- cannot be used as table keys. BudgetPedro's solution: read aura.spellId
--- normally but skip it with issecretvalue() if it is protected. Non-secret
--- Sated debuff IDs are still readable and fire at the exact same instant as
--- the lust buff itself.
 local SATED_DEBUFF_IDS = {
-    [57723]  = true, -- Exhaustion           (Heroism / Fury of the Aspects / Primal Rage)
-    [57724]  = true, -- Sated                (Bloodlust)
+    [57723]  = true, -- Exhaustion            (Heroism / Fury of the Aspects / Primal Rage)
+    [57724]  = true, -- Sated                 (Bloodlust)
     [80354]  = true, -- Temporal Displacement (Time Warp)
-    [95809]  = true, -- Insanity             (Ancient Hysteria - Core Hound pet)
-    [160455] = true, -- Fatigued             (Drums of the Maelstrom)
-    [264689] = true, -- Fatigued             (Hunter pet variant)
-    [390435] = true, -- Exhaustion           (additional variant)
+    [95809]  = true, -- Insanity              (Ancient Hysteria - Core Hound pet)
+    [160455] = true, -- Fatigued              (Drums of the Maelstrom)
+    [264689] = true, -- Fatigued              (Hunter pet variant)
+    [390435] = true, -- Exhaustion            (additional variant)
 }
 
 -- Track state
@@ -45,46 +36,40 @@ local CHANNEL_CVARS = {
 
 -- Built-in music file paths (defined early, no DB dependency)
 local BUILTIN_MUSIC = {
-    chipi = "Interface\\AddOns\\DjLust\\chipilust.mp3",
-    pedro = "Interface\\AddOns\\DjLust\\pedrolust.mp3",
+    fish = "Interface\\AddOns\\FishLust\\fish.mp3"
 }
 
 -- Forward declarations so OnPlayerAuraUpdate (defined before the sound
 -- functions) can reference them without resolving to nil globals.
-local PlayDjLust, StopDjLust
+local PlayFishLust, StopFishLust
 
 -- Event frame
 local frame = CreateFrame("Frame")
 
 -- ─── DB INIT (deferred until SavedVariables are loaded) ──────────────────────
 -- Mirrors BudgetPedro's EventUtil.ContinueOnAddOnLoaded pattern: all code that
--- touches DjLustDB runs after ADDON_LOADED, when SavedVariables are guaranteed
--- to be available. Without this, DjLustDB reads always return defaults.
+-- touches FishLustDB runs after ADDON_LOADED, when SavedVariables are guaranteed
+-- to be available. Without this, FishLustDB reads always return defaults.
 EventUtil.ContinueOnAddOnLoaded(addonName, function()
-    DjLustDB = DjLustDB or {}
+    FishLustDB = FishLustDB or {}
 
     -- Schema migration v1 (theme/customSong) → v2 (animationStyle/music)
-    if DjLustDB.theme and not DjLustDB.animationStyle then
-        local styleMap = { chipi = "chipi", pedro = "pedro", text = "text", custom = "chipi" }
-        DjLustDB.animationStyle = styleMap[DjLustDB.theme] or "chipi"
-        if DjLustDB.customSong and DjLustDB.customSong ~= "" then
-            DjLustDB.music = DjLustDB.customSong
+    if FishLustDB.theme and not FishLustDB.animationStyle then
+        local styleMap = {fish = "fish"}
+        FishLustDB.animationStyle = styleMap[FishLustDB.theme] or "fish"
         end
-        DjLustDB.theme      = nil
-        DjLustDB.customSong = nil
+        FishLustDB.theme      = nil
     end
-    if DjLustDB.animationEnabled ~= nil then DjLustDB.animationEnabled = nil end
+    -- get to work here, if I care to add the animations back in
+    -- if FishLustDB.animationEnabled ~= nil then FishLustDB.animationEnabled = nil end
     -- Schema migration v2 (hasteThreshold) → v3 (aura-based, threshold unused)
-    if DjLustDB.hasteThreshold ~= nil then DjLustDB.hasteThreshold = nil end
+    -- if FishLustDB.hasteThreshold ~= nil then FishLustDB.hasteThreshold = nil end
 
-    DjLustDB.animationStyle = DjLustDB.animationStyle or "chipi"
-    DjLustDB.music          = DjLustDB.music          or ""
-    DjLustDB.partyText      = DjLustDB.partyText      or "PARTY TIME!"
-    DjLustDB.volume         = DjLustDB.volume         or 1.0
-    DjLustDB.soundChannel   = DjLustDB.soundChannel   or "Dialog"
-    DjLustDB.muteSound      = DjLustDB.muteSound      or false
-    DjLustDB.savedSongs     = DjLustDB.savedSongs     or {}
-    if DjLustDB.animationLocked == nil then DjLustDB.animationLocked = false end
+    -- FishLustDB.animationStyle = FishLustDB.animationStyle or "fish"
+    FishLustDB.music          = FishLustDB.music          or ""
+    FishLustDB.volume         = FishLustDB.volume         or 1.0
+    FishLustDB.soundChannel   = FishLustDB.soundChannel   or "Master"
+    if FishLustDB.animationLocked == nil then FishLustDB.animationLocked = false end
 end)
 
 -- Returns true + reason string if the given channel (or master) is muted/zero
@@ -108,21 +93,21 @@ end
 
 -- Get current music file path
 local function GetMusicFile()
-    if DjLustDB and DjLustDB.music and DjLustDB.music ~= "" then
-        return DjLustDB.music
+    if FishLustDB and FishLustDB.music and FishLustDB.music ~= "" then
+        return FishLustDB.music
     end
-    return BUILTIN_MUSIC.chipi
+    return BUILTIN_MUSIC.fish
 end
 
 -- Debug print helper
 function printDebug(...)
     if not debugAddon then return end
-    print("|cff00bfff[DjLust]|r |cffff8800[DEBUG]|r", ...)
+    print("|cff00bfff[FishLust]|r |cffff8800[DEBUG]|r", ...)
 end
 
 local function SetDebug(enabled)
     debugAddon = enabled
-    print(string.format("|cff00bfff[DjLust]|r Debug mode %s",
+    print(string.format("|cff00bfff[FishLust]|r Debug mode %s",
         enabled and "|cff00ff00ENABLED|r" or "|cffff0000DISABLED|r"))
 end
 
@@ -155,14 +140,14 @@ local function OnPlayerAuraUpdate(updateInfo)
             isLusted      = true
             activeDebufID = aura.spellId
             printDebug("Lust detected via spellId:", aura.spellId)
-            PlayDjLust()
+            PlayFishLust()
 
             if lustEndTimer then lustEndTimer:Cancel() end
             lustEndTimer = C_Timer.NewTimer(LUST_DURATION, function()
                 lustEndTimer  = nil
                 isLusted      = false
                 activeDebufID = nil
-                StopDjLust()
+                StopFishLust()
                 printDebug("Lust timer expired - stopping")
             end)
             return
@@ -183,7 +168,7 @@ end
 
 local function RestoreChannelVolume()
     if cvarDirty and originalChannelVolume then
-        local channel  = DjLustDB.soundChannel or "Dialog"
+        local channel  = FishLustDB.soundChannel or "Master"
         local cvarName = CHANNEL_CVARS[channel] or "Sound_DialogVolume"
         SetCVar(cvarName, tostring(originalChannelVolume))
         cvarDirty = false
@@ -201,21 +186,21 @@ function addon:TestMusic()
     StopMusic()
     CleanupSoundHandles()
 
-    if DjLustDB.muteSound then
-        print("|cff00bfff[DjLust]|r Sound is muted.")
+    if FishLustDB.muteSound then
+        print("|cff00bfff[FishLust]|r Sound is muted.")
         return
     end
 
-    local channel   = DjLustDB.soundChannel or "Dialog"
+    local channel   = FishLustDB.soundChannel or "Dialog"
     local musicFile = GetMusicFile()
 
     local isMuted, muteReason = IsChannelEffectivelyMuted(channel)
     if isMuted then
-        print("|cff00bfff[DjLust]|r |cffff8800[!] Cannot play music:|r " .. muteReason)
+        print("|cff00bfff[FishLust]|r |cffff8800[!] Cannot play music:|r " .. muteReason)
         return
     end
 
-    local volume   = DjLustDB.volume or 1.0
+    local volume   = FishLustDB.volume or 1.0
     local cvarName = CHANNEL_CVARS[channel] or "Sound_DialogVolume"
     if not originalChannelVolume then
         originalChannelVolume = tonumber(GetCVar(cvarName)) or 1.0
@@ -229,15 +214,15 @@ function addon:TestMusic()
     local willPlay, soundHandle = PlaySoundFile(musicFile, channel)
     if willPlay then
         soundHandlePool[1] = soundHandle
-        print("|cff00bfff[DjLust]|r Testing music: " .. musicFile)
+        print("|cff00bfff[FishLust]|r Testing music: " .. musicFile)
     else
-        print("|cff00bfff[DjLust]|r |cffff8800[!] Failed to play:|r " .. musicFile)
+        print("|cff00bfff[FishLust]|r |cffff8800[!] Failed to play:|r " .. musicFile)
         RestoreChannelVolume()
     end
 end
 
 -- Play bloodlust music and animation
-PlayDjLust = function()
+PlayFishLust = function()
     local now = GetTime()
     if now - lastPlayTime < PLAY_COOLDOWN then
         printDebug("Music play blocked - cooldown active (", string.format("%.1f", PLAY_COOLDOWN - (now - lastPlayTime)), "s remaining)")
@@ -248,29 +233,29 @@ PlayDjLust = function()
     StopMusic()
     CleanupSoundHandles()
 
-    if DjLustDB.animationStyle ~= "none" then
+    if FishLustDB.animationStyle ~= "none" then
         if addon.StartAnimation then addon:StartAnimation() end
     end
 
-    if DjLustDB.muteSound then
+    if FishLustDB.muteSound then
         printDebug("Sound muted by user preference - animation only")
         return
     end
 
-    local channel   = DjLustDB.soundChannel or "Dialog"
+    local channel   = FishLustDB.soundChannel or "Dialog"
     local musicFile = GetMusicFile()
 
     local isMuted, muteReason = IsChannelEffectivelyMuted(channel)
     if isMuted then
         print(string.format(
-            "|cff00bfff[DjLust]|r |cffff8800[!] Cannot play music:|r %s.\n"
-            .. "  Open |cffff8800/djlust settings|r to pick a different channel or mute sound intentionally.",
+            "|cff00bfff[FishLust]|r |cffff8800[!] Cannot play music:|r %s.\n"
+            .. "  Open |cffff8800/FishLust settings|r to pick a different channel or mute sound intentionally.",
             muteReason
         ))
         return
     end
 
-    local volume = (DjLustDB and DjLustDB.volume) or 1.0
+    local volume = (FishLustDB and FishLustDB.volume) or 1.0
 
     if type(musicFile) == "number" then
         PlaySound(musicFile, channel)
@@ -294,9 +279,9 @@ PlayDjLust = function()
             printDebug("Now playing:", musicFile, "on channel:", channel, "at volume", math.floor(volume * 100), "%")
         else
             print(string.format(
-                "|cff00bfff[DjLust]|r |cffff8800[!] Failed to load music file.|r "
+                "|cff00bfff[FishLust]|r |cffff8800[!] Failed to load music file.|r "
                 .. "Check the file exists and the |cffff8800%s|r channel isn't muted. "
-                .. "Use |cffff8800/djlust settings|r to change channel.",
+                .. "Use |cffff8800/FishLust settings|r to change channel.",
                 channel
             ))
             RestoreChannelVolume()
@@ -305,7 +290,7 @@ PlayDjLust = function()
 end
 
 -- Stop bloodlust music (stops both music and animation when lust ends)
-StopDjLust = function()
+StopFishLust = function()
     CleanupSoundHandles()
     RestoreChannelVolume()
     if addon.StopAnimation then addon:StopAnimation() end
@@ -322,8 +307,8 @@ end
 -- Update volume for currently playing music
 function addon:UpdateVolume(volume)
     if soundHandlePool[1] and originalChannelVolume then
-        local channel  = DjLustDB.soundChannel or "Dialog"
-        local cvarName = CHANNEL_CVARS[channel] or "Sound_DialogVolume"
+        local channel  = FishLustDB.soundChannel or "Dialog"
+        local cvarName = CHANNEL_CVARS[channel] or "MasterVolume"
         SetCVar(cvarName, tostring(volume))
         cvarDirty = true
         printDebug("Volume updated to", math.floor(volume * 100), "%")
@@ -334,41 +319,41 @@ end
 function addon:SetSoundChannel(channel)
     if CHANNEL_CVARS[channel] then
         RestoreChannelVolume()
-        DjLustDB.soundChannel = channel
+        FishLustDB.soundChannel = channel
         printDebug("Sound channel set to:", channel)
     else
-        print("|cff00bfff[DjLust]|r Invalid channel. Valid options: Master, SFX, Dialog, Music, Ambience")
+        print("|cff00bfff[FishLust]|r Invalid channel. Valid options: Master, SFX, Dialog, Music, Ambience")
     end
 end
 
 -- Toggle addon-level sound mute (animation still plays)
 function addon:SetMuteSound(muted)
-    DjLustDB.muteSound = muted
+    FishLustDB.muteSound = muted
     if muted then
         CleanupSoundHandles()
         RestoreChannelVolume()
-        print("|cff00bfff[DjLust]|r Sound |cffff0000muted|r - animation will still play.")
+        print("|cff00bfff[FishLust]|r Sound |cffff0000muted|r - animation will still play.")
     else
-        print("|cff00bfff[DjLust]|r Sound |cff00ff00enabled|r.")
+        print("|cff00bfff[FishLust]|r Sound |cff00ff00enabled|r.")
     end
 end
 
 -- Update animation style
 function addon:UpdateTheme(style)
-    DjLustDB.animationStyle = style
+    FishLustDB.animationStyle = style
     if addon.UpdateAnimationTexture then addon:UpdateAnimationTexture() end
 end
 
 -- Update selected music
 function addon:UpdateMusic(path)
-    DjLustDB.music = path
+    FishLustDB.music = path
 end
 
 -- ─── COMPREHENSIVE CLEANUP ───────────────────────────────────────────────────
 local function Cleanup()
     printDebug("Running comprehensive cleanup...")
     if lustEndTimer then lustEndTimer:Cancel() ; lustEndTimer = nil end
-    StopDjLust()
+    StopFishLust()
     isLusted      = false
     activeDebufID = nil
     lastPlayTime  = 0
@@ -386,7 +371,7 @@ frame:RegisterEvent("PLAYER_LOGOUT")
 
 frame:SetScript("OnEvent", function(self, event, ...)
     if event == "LOADING_SCREEN_DISABLED" then
-        printDebug("DjLust loaded - Style:", DjLustDB.animationStyle or "chipi")
+        printDebug("FishLust loaded - Style:", FishLustDB.animationStyle or "fish")
         -- Mirror BudgetPedro: only register UNIT_AURA in raid/party instances.
         -- This avoids unnecessary aura processing in the open world.
         local _, instanceType = GetInstanceInfo()
@@ -407,7 +392,7 @@ frame:SetScript("OnEvent", function(self, event, ...)
         if lustEndTimer then lustEndTimer:Cancel() ; lustEndTimer = nil end
         isLusted      = false
         activeDebufID = nil
-        StopDjLust()
+        StopFishLust()
 
     elseif event == "PLAYER_LOGOUT" then
         Cleanup()
@@ -415,23 +400,23 @@ frame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 -- ─── SLASH COMMANDS ──────────────────────────────────────────────────────────
-SLASH_DJLUST1 = "/djl"
-SLASH_DJLUST2 = "/djlust"
-SlashCmdList["DJLUST"] = function(msg)
+SLASH_FishLust1 = "/fshl"
+SLASH_FishLust2 = "/FishLust"
+SlashCmdList["FishLust"] = function(msg)
     if msg == "test" then
-        local style = DjLustDB.animationStyle or "chipi"
-        print("[DjLust] [TEST] Testing playback (style: " .. style .. ")")
-        PlayDjLust()
+        local style = FishLustDB.animationStyle or "fish"
+        print("[FishLust] [TEST] Testing playback (style: " .. style .. ")")
+        PlayFishLust()
 
     elseif msg == "stop" then
-        print("[DjLust] [STOP] Stopping music...")
+        print("[FishLust] [STOP] Stopping music...")
         addon:StopMusic()
         if lustEndTimer then lustEndTimer:Cancel() ; lustEndTimer = nil end
         isLusted      = false
         activeDebufID = nil
 
     elseif msg == "status" then
-        print("|cff00bfff[DjLust]|r [STATUS]:")
+        print("|cff00bfff[FishLust]|r [STATUS]:")
         print("  Bloodlusted:", isLusted and "|cff00ff00YES|r" or "|cffff0000NO|r")
         if activeDebufID then
             print("  Triggered by:", SATED_DEBUFF_IDS[activeDebufID] or "Unknown", "(ID: " .. activeDebufID .. ")")
@@ -444,21 +429,21 @@ SlashCmdList["DJLUST"] = function(msg)
         print("  Tracking", (function() local n=0 for _ in pairs(SATED_DEBUFF_IDS) do n=n+1 end return n end)(), "debuff IDs")
 
     elseif msg == "reset" then
-        print("[DjLust] [RESET] Resetting detection state...")
+        print("[FishLust] [RESET] Resetting detection state...")
         if lustEndTimer then lustEndTimer:Cancel() ; lustEndTimer = nil end
         isLusted      = false
         activeDebufID = nil
-        StopDjLust()
-        print("|cff00bfff[DjLust]|r Detection reset. Watching for Sated-type debuffs.")
+        StopFishLust()
+        print("|cff00bfff[FishLust]|r Detection reset. Watching for Sated-type debuffs.")
 
     elseif msg == "config" then
-        print("|cff00bfff[DjLust]|r [CONFIG]\nConfiguration:")
-        print("  Animation style:", DjLustDB.animationStyle or "chipi")
-        print("  Music:", (DjLustDB.music ~= "") and DjLustDB.music or "(default: chipilust.mp3)")
-        print("  Volume:", math.floor(DjLustDB.volume * 100) .. "%")
+        print("|cff00bfff[FishLust]|r [CONFIG]\nConfiguration:")
+        print("  Animation style:", FishLustDB.animationStyle or "fish")
+        print("  Music:", (FishLustDB.music ~= "") and FishLustDB.music or "(default: fish.mp3)")
+        print("  Volume:", math.floor(FishLustDB.volume * 100) .. "%")
         print("  Detection: issecretvalue() guard on UNIT_AURA addedAuras (BudgetPedro method)")
-        print("  Animation locked:", DjLustDB.animationLocked and "YES" or "NO")
-        print("\nTo change settings, use /djlust settings")
+        print("  Animation locked:", FishLustDB.animationLocked and "YES" or "NO")
+        print("\nTo change settings, use /FishLust settings")
 
     elseif msg:match("^debug") then
         local arg = msg:match("^debug%s*(%S*)")
@@ -467,45 +452,45 @@ SlashCmdList["DJLUST"] = function(msg)
         elseif arg == "off" then
             SetDebug(false)
         else
-            print("|cff00bfff[DjLust]|r Usage:")
-            print("  /djlust debug on  - Enable debug output")
-            print("  /djlust debug off - Disable debug output")
+            print("|cff00bfff[FishLust]|r Usage:")
+            print("  /FishLust debug on  - Enable debug output")
+            print("  /FishLust debug off - Disable debug output")
         end
 
     elseif msg:match("^volume") then
         local vol = tonumber(msg:match("^volume%s+(%d+)"))
         if vol and vol >= 0 and vol <= 100 then
-            DjLustDB.volume = vol / 100
-            if addon.UpdateVolume then addon:UpdateVolume(DjLustDB.volume) end
-            print(string.format("|cff00bfff[DjLust]|r Volume set to %d%%", vol))
+            FishLustDB.volume = vol / 100
+            if addon.UpdateVolume then addon:UpdateVolume(FishLustDB.volume) end
+            print(string.format("|cff00bfff[FishLust]|r Volume set to %d%%", vol))
         else
-            print("|cff00bfff[DjLust]|r Usage: /djlust volume <0-100>")
-            print(string.format("  Current volume: %d%%", math.floor((DjLustDB.volume or 1.0) * 100)))
+            print("|cff00bfff[FishLust]|r Usage: /FishLust volume <0-100>")
+            print(string.format("  Current volume: %d%%", math.floor((FishLustDB.volume or 1.0) * 100)))
         end
 
     elseif msg == "cleanup" then
         Cleanup()
-        print("|cff00bfff[DjLust]|r Cleanup complete - all resources freed")
+        print("|cff00bfff[FishLust]|r Cleanup complete - all resources freed")
 
     elseif msg == "mem" then
         UpdateAddOnMemoryUsage()
-        local mem = GetAddOnMemoryUsage("DjLust")
-        print(string.format("|cff00bfff[DjLust]|r Memory usage: %.2f KB", mem))
+        local mem = GetAddOnMemoryUsage("FishLust")
+        print(string.format("|cff00bfff[FishLust]|r Memory usage: %.2f KB", mem))
         print("  Sound handles:", #soundHandlePool)
 
     else
-        print("|cff00bfff[DjLust] [HELP]\nAvailable Commands:|r")
-        print("  |cffff8800/djlust status|r - Show current status and active auras")
-        print("  |cffff8800/djlust test|r - Test music playback")
-        print("  |cffff8800/djlust stop|r - Stop music")
-        print("  |cffff8800/djlust reset|r - Reset detection state")
-        print("  |cffff8800/djlust config|r - Show configuration")
-        print("  |cffff8800/djlust volume <0-100>|r - Set music volume")
-        print("  |cffff8800/djlust debug on/off|r - Toggle debug output")
-        print("  |cffff8800/djlust cleanup|r - Force cleanup and garbage collection")
-        print("  |cffff8800/djlust mem|r - Show memory usage")
-        print("|cff00bfff[TIP]|r |cffff8800/djl|r can be used as shortcut/alias of |cffff8800/djlust|r")
+        print("|cff00bfff[FishLust] [HELP]\nAvailable Commands:|r")
+        print("  |cffff8800/FishLust status|r - Show current status and active auras")
+        print("  |cffff8800/FishLust test|r - Test music playback")
+        print("  |cffff8800/FishLust stop|r - Stop music")
+        print("  |cffff8800/FishLust reset|r - Reset detection state")
+        print("  |cffff8800/FishLust config|r - Show configuration")
+        print("  |cffff8800/FishLust volume <0-100>|r - Set music volume")
+        print("  |cffff8800/FishLust debug on/off|r - Toggle debug output")
+        print("  |cffff8800/FishLust cleanup|r - Force cleanup and garbage collection")
+        print("  |cffff8800/FishLust mem|r - Show memory usage")
+        print("|cff00bfff[TIP]|r |cffff8800/djl|r can be used as shortcut/alias of |cffff8800/FishLust|r")
     end
 end
 
-print("|cff00bfff[DjLust]|r Type |cffff8800/djlust|r for all available commands.")
+print("|cff00bfff[FishLust]|r Type |cffff8800/FishLust|r for all available commands.")

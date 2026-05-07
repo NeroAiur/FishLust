@@ -1,4 +1,4 @@
--- SettingsGUI.lua: Settings panel for DjLust
+-- SettingsGUI.lua: Settings panel for FishLust
 -- Sections: Animation | Music | Profiles | Detection | Minimap | Debug
 
 local addonName, addon = ...
@@ -15,35 +15,35 @@ local manualAnimActive = false
 -- DB defaults + migration
 --------------------------------------------------
 local function EnsureDBDefaults()
-    if not DjLustDB then DjLustDB = {} end
+    if not FishLustDB then FishLustDB = {} end
 
     -- Schema migration v1 (theme/customSong) to v2 (animationStyle/music)
-    if DjLustDB.theme and not DjLustDB.animationStyle then
-        local styleMap = { chipi="chipi", pedro="pedro", text="text", custom="chipi" }
-        DjLustDB.animationStyle = styleMap[DjLustDB.theme] or "chipi"
-        if DjLustDB.customSong and DjLustDB.customSong ~= "" then
-            DjLustDB.music = DjLustDB.customSong
+    if FishLustDB.theme and not FishLustDB.animationStyle then
+        local styleMap = {fish="fish"}
+        -- FishLustDB.animationStyle = styleMap[FishLustDB.theme] or "fish"
+        if FishLustDB.customSong and FishLustDB.customSong ~= "" then
+            FishLustDB.music = FishLustDB.customSong
         end
-        DjLustDB.theme      = nil
-        DjLustDB.customSong = nil
+        FishLustDB.theme      = nil
+        FishLustDB.customSong = nil
     end
-    if DjLustDB.animationEnabled ~= nil then DjLustDB.animationEnabled = nil end
+    if FishLustDB.animationEnabled ~= nil then FishLustDB.animationEnabled = nil end
 
-    DjLustDB.animationStyle = DjLustDB.animationStyle or "chipi"
-    DjLustDB.music          = DjLustDB.music          or ""
-    DjLustDB.partyText      = DjLustDB.partyText      or "PARTY TIME!"
-    DjLustDB.animationSize  = DjLustDB.animationSize  or 128
-    DjLustDB.animationFPS   = DjLustDB.animationFPS   or 8
-    DjLustDB.animationX     = DjLustDB.animationX     or 0
-    DjLustDB.animationY     = DjLustDB.animationY     or 0
-    DjLustDB.volume         = DjLustDB.volume         or 1.0
-    DjLustDB.soundChannel   = DjLustDB.soundChannel   or "Dialog"
-    DjLustDB.muteSound      = DjLustDB.muteSound      or false
-    DjLustDB.savedSongs     = DjLustDB.savedSongs     or {}
-    DjLustDB.debugMode      = DjLustDB.debugMode      or false
-    if DjLustDB.animationLocked == nil then DjLustDB.animationLocked = false end
-    if not DjLustDB.minimap      then DjLustDB.minimap = {} end
-    if DjLustDB.minimap.hide == nil then DjLustDB.minimap.hide = false end
+    -- FishLustDB.animationStyle = FishLustDB.animationStyle or "chipi"
+    FishLustDB.music          = FishLustDB.music          or ""
+    -- FishLustDB.partyText      = FishLustDB.partyText      or "PARTY TIME!"
+    -- FishLustDB.animationSize  = FishLustDB.animationSize  or 128
+    -- FishLustDB.animationFPS   = FishLustDB.animationFPS   or 8
+    -- FishLustDB.animationX     = FishLustDB.animationX     or 0
+    -- FishLustDB.animationY     = FishLustDB.animationY     or 0
+    FishLustDB.volume         = FishLustDB.volume         or 1.0
+    FishLustDB.soundChannel   = FishLustDB.soundChannel   or "Dialog"
+    FishLustDB.muteSound      = FishLustDB.muteSound      or false
+    FishLustDB.savedSongs     = FishLustDB.savedSongs     or {}
+    FishLustDB.debugMode      = FishLustDB.debugMode      or false
+    -- if FishLustDB.animationLocked == nil then FishLustDB.animationLocked = false end
+    if not FishLustDB.minimap      then FishLustDB.minimap = {} end
+    if FishLustDB.minimap.hide == nil then FishLustDB.minimap.hide = false end
 end
 
 --------------------------------------------------
@@ -52,41 +52,41 @@ end
 local function UpdateUIValues(f)
     if not f or not f.uiElements then return end
     local ui = f.uiElements
-    local s  = DjLustDB.animationStyle
+    -- local s  = FishLustDB.animationStyle
 
-    if ui.animChipi  then ui.animChipi:SetChecked(s == "chipi")  end
-    if ui.animPedro  then ui.animPedro:SetChecked(s == "pedro")  end
-    if ui.animText   then ui.animText:SetChecked(s == "text")    end
-    if ui.animNone   then ui.animNone:SetChecked(s == "none")    end
-    if ui.lockAnim   then ui.lockAnim:SetChecked(DjLustDB.animationLocked) end
-    if ui.partyTextBox then ui.partyTextBox:SetText(DjLustDB.partyText or "PARTY TIME!") end
+    -- if ui.animChipi  then ui.animChipi:SetChecked(s == "chipi")  end
+    -- if ui.animPedro  then ui.animPedro:SetChecked(s == "pedro")  end
+    -- if ui.animText   then ui.animText:SetChecked(s == "text")    end
+    -- if ui.animNone   then ui.animNone:SetChecked(s == "none")    end
+    -- if ui.lockAnim   then ui.lockAnim:SetChecked(FishLustDB.animationLocked) end
+    -- if ui.partyTextBox then ui.partyTextBox:SetText(FishLustDB.partyText or "PARTY TIME!") end
 
-    if ui.sizeSlider and ui.sizeLabel then
-        ui.sizeSlider:SetValue(DjLustDB.animationSize)
-        ui.sizeLabel:SetText("Animation Size: " .. DjLustDB.animationSize .. " px")
-    end
-    if ui.fpsSlider and ui.fpsLabel then
-        ui.fpsSlider:SetValue(DjLustDB.animationFPS)
-        ui.fpsLabel:SetText("Animation Speed: " .. DjLustDB.animationFPS .. " FPS")
+    -- if ui.sizeSlider and ui.sizeLabel then
+        -- ui.sizeSlider:SetValue(FishLustDB.animationSize)
+        -- ui.sizeLabel:SetText("Animation Size: " .. FishLustDB.animationSize .. " px")
+    -- end
+    -- if ui.fpsSlider and ui.fpsLabel then
+        -- ui.fpsSlider:SetValue(FishLustDB.animationFPS)
+        -- ui.fpsLabel:SetText("Animation Speed: " .. FishLustDB.animationFPS .. " FPS")
     end
     if ui.volumeSlider and ui.volumeLabel then
-        ui.volumeSlider:SetValue(DjLustDB.volume)
-        ui.volumeLabel:SetText("Volume: " .. math.floor(DjLustDB.volume * 100) .. "%")
+        ui.volumeSlider:SetValue(FishLustDB.volume)
+        ui.volumeLabel:SetText("Volume: " .. math.floor(FishLustDB.volume * 100) .. "%")
     end
-    if ui.muteCheck then ui.muteCheck:SetChecked(DjLustDB.muteSound) end
+    if ui.muteCheck then ui.muteCheck:SetChecked(FishLustDB.muteSound) end
     if ui.channelRadios then
         for ch, btn in pairs(ui.channelRadios) do
-            btn:SetChecked(DjLustDB.soundChannel == ch)
+            btn:SetChecked(FishLustDB.soundChannel == ch)
         end
     end
-    if ui.minimapCheck then ui.minimapCheck:SetChecked(not DjLustDB.minimap.hide) end
-    if ui.debugCheck   then ui.debugCheck:SetChecked(DjLustDB.debugMode)          end
+    if ui.minimapCheck then ui.minimapCheck:SetChecked(not FishLustDB.minimap.hide) end
+    if ui.debugCheck   then ui.debugCheck:SetChecked(FishLustDB.debugMode)          end
 end
 
 --------------------------------------------------
 -- Confirm-remove popup
 --------------------------------------------------
-StaticPopupDialogs["DJLUST_CONFIRM_REMOVE"] = {
+StaticPopupDialogs["FishLust_CONFIRM_REMOVE"] = {
     text          = "Remove \"%s\" from your song library?",
     button1       = "Yes, Remove",
     button2       = "Cancel",
@@ -96,17 +96,17 @@ StaticPopupDialogs["DJLUST_CONFIRM_REMOVE"] = {
     preferredIndex = 3,
     OnAccept = function(self, data)
         if not data then return end
-        DjLustDB.savedSongs = DjLustDB.savedSongs or {}
-        for j = #DjLustDB.savedSongs, 1, -1 do
-            if DjLustDB.savedSongs[j].path == data.path then
-                table.remove(DjLustDB.savedSongs, j)
+        FishLustDB.savedSongs = FishLustDB.savedSongs or {}
+        for j = #FishLustDB.savedSongs, 1, -1 do
+            if FishLustDB.savedSongs[j].path == data.path then
+                table.remove(FishLustDB.savedSongs, j)
                 break
             end
         end
-        if DjLustDB.music == data.path then
-            DjLustDB.music = ""
+        if FishLustDB.music == data.path then
+            FishLustDB.music = ""
             if addon.UpdateMusic then addon:UpdateMusic("") end
-            local dd = _G["DjLustSongDropdown"]
+            local dd = _G["FishLustSongDropdown"]
             if dd then UIDropDownMenu_SetText(dd, "(None / Default)") end
         end
         if data.onDone then data.onDone() end
@@ -117,13 +117,13 @@ StaticPopupDialogs["DJLUST_CONFIRM_REMOVE"] = {
 -- Create Settings Window
 --------------------------------------------------
 local function CreateSettingsWindow()
-    if _G["DjLustSettingsFrame"] then return _G["DjLustSettingsFrame"] end
+    if _G["FishLustSettingsFrame"] then return _G["FishLustSettingsFrame"] end
 
     EnsureDBDefaults()
 
     local WIDTH = 450
 
-    local f = CreateFrame("Frame", "DjLustSettingsFrame", UIParent, "BackdropTemplate")
+    local f = CreateFrame("Frame", "FishLustSettingsFrame", UIParent, "BackdropTemplate")
     f:SetSize(WIDTH, 600)
     f:SetPoint("CENTER")
     f:SetFrameStrata("DIALOG")
@@ -135,7 +135,7 @@ local function CreateSettingsWindow()
     f:SetScript("OnDragStop",  f.StopMovingOrSizing)
     f:SetClampedToScreen(true)
 
-    tinsert(UISpecialFrames, "DjLustSettingsFrame")
+    tinsert(UISpecialFrames, "FishLustSettingsFrame")
 
     f:SetBackdrop({
         bgFile   = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -147,15 +147,15 @@ local function CreateSettingsWindow()
 
     f.title = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     f.title:SetPoint("TOP", 0, -15)
-    f.title:SetText("|cff00bfffDjLust Settings|r")
+    f.title:SetText("|cff00bfffFishLust Settings|r")
 
     -- On close: stop any manually triggered music/animation
     f:SetScript("OnHide", function(self)
         if addon.StopMusic then addon:StopMusic() end
-        if manualAnimActive then
-            manualAnimActive = false
-            if SlashCmdList["DJLANIM"] then SlashCmdList["DJLANIM"]("stop") end
-        end
+        -- if manualAnimActive then
+            -- manualAnimActive = false
+            -- if SlashCmdList["FSHLANIM"] then SlashCmdList["FSHLANIM"]("stop") end
+        -- end
     end)
 
     local closeBtn = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -215,159 +215,159 @@ local function CreateSettingsWindow()
     end
 
     -- ── SECTION: ANIMATION ─────────────────────────────────────────────────
-    Header("Animation")
+    -- Header("Animation")
 
     -- Radio row: Chipi | Pedro | Text | None  (all on one line)
-    local animChipi = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
-    animChipi:SetPoint("TOPLEFT", 30, y)
-    animChipi.text:SetText("Chipi Chipi")
-    animChipi:SetChecked(DjLustDB.animationStyle == "chipi")
+    -- local animChipi = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
+    -- animChipi:SetPoint("TOPLEFT", 30, y)
+    -- animChipi.text:SetText("Chipi Chipi")
+    -- animChipi:SetChecked(FishLustDB.animationStyle == "chipi")
 
-    local animPedro = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
-    animPedro:SetPoint("TOPLEFT", 145, y)
-    animPedro.text:SetText("Pedro")
-    animPedro:SetChecked(DjLustDB.animationStyle == "pedro")
+    -- local animPedro = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
+    -- animPedro:SetPoint("TOPLEFT", 145, y)
+    -- animPedro.text:SetText("Pedro")
+    -- animPedro:SetChecked(FishLustDB.animationStyle == "pedro")
 
-    local animText = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
-    animText:SetPoint("TOPLEFT", 250, y)
-    animText.text:SetText("Text")
-    animText:SetChecked(DjLustDB.animationStyle == "text")
+    -- local animText = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
+    -- animText:SetPoint("TOPLEFT", 250, y)
+    -- animText.text:SetText("Text")
+    -- animText:SetChecked(FishLustDB.animationStyle == "text")
 
-    local animNone = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
-    animNone:SetPoint("TOPLEFT", 330, y)
-    animNone.text:SetText("None")
-    animNone:SetChecked(DjLustDB.animationStyle == "none")
+    -- local animNone = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
+    -- animNone:SetPoint("TOPLEFT", 330, y)
+    -- animNone.text:SetText("None")
+    -- animNone:SetChecked(FishLustDB.animationStyle == "none")
 
-    f.uiElements.animChipi = animChipi
-    f.uiElements.animPedro = animPedro
-    f.uiElements.animText  = animText
-    f.uiElements.animNone  = animNone
-    y = y - 30
+    -- f.uiElements.animChipi = animChipi
+    -- f.uiElements.animPedro = animPedro
+    -- f.uiElements.animText  = animText
+    -- f.uiElements.animNone  = animNone
+    -- y = y - 30
 
     -- Party text row (visible only when Text is selected)
-    local partyLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    partyLabel:SetPoint("TOPLEFT", 30, y)
-    partyLabel:SetText("Display Text:")
+    -- local partyLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- partyLabel:SetPoint("TOPLEFT", 30, y)
+    -- partyLabel:SetText("Display Text:")
 
-    local partyBox = CreateFrame("EditBox", "DjLustPartyTextBox", content, "InputBoxTemplate")
-    partyBox:SetPoint("TOPLEFT", 125, y + 2)
-    partyBox:SetWidth(245)
-    partyBox:SetHeight(22)
-    partyBox:SetAutoFocus(false)
-    partyBox:SetMaxLetters(64)
-    partyBox:SetText(DjLustDB.partyText or "PARTY TIME!")
-    partyBox:SetScript("OnEnterPressed", function(self)
-        self:ClearFocus()
-        local txt = self:GetText()
-        if txt == "" then txt = "PARTY TIME!" end
-        DjLustDB.partyText = txt
-        self:SetText(txt)
-        if addon.UpdatePartyText then addon:UpdatePartyText(txt) end
-    end)
-    partyBox:SetScript("OnEscapePressed", function(self)
-        self:SetText(DjLustDB.partyText or "PARTY TIME!")
-        self:ClearFocus()
-    end)
-    f.uiElements.partyTextBox = partyBox
+    -- local partyBox = CreateFrame("EditBox", "FishLustPartyTextBox", content, "InputBoxTemplate")
+    -- partyBox:SetPoint("TOPLEFT", 125, y + 2)
+    -- partyBox:SetWidth(245)
+    -- partyBox:SetHeight(22)
+    -- partyBox:SetAutoFocus(false)
+    -- partyBox:SetMaxLetters(64)
+    -- partyBox:SetText(FishLustDB.partyText or "PARTY TIME!")
+    -- partyBox:SetScript("OnEnterPressed", function(self)
+    --     self:ClearFocus()
+    --     local txt = self:GetText()
+    --     if txt == "" then txt = "PARTY TIME!" end
+    --     FishLustDB.partyText = txt
+    --     self:SetText(txt)
+    --     if addon.UpdatePartyText then addon:UpdatePartyText(txt) end
+    -- end)
+    -- partyBox:SetScript("OnEscapePressed", function(self)
+    --     self:SetText(FishLustDB.partyText or "PARTY TIME!")
+    --     self:ClearFocus()
+    -- end)
+    -- f.uiElements.partyTextBox = partyBox
 
-    local partyHint = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    partyHint:SetPoint("TOPLEFT", 375, y)
-    partyHint:SetText("|cff606060Enter|r")
+    -- local partyHint = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    -- partyHint:SetPoint("TOPLEFT", 375, y)
+    -- partyHint:SetText("|cff606060Enter|r")
 
-    local function RefreshPartyText()
-        local show = DjLustDB.animationStyle == "text"
-        if show then partyLabel:Show() ; partyBox:Show() ; partyHint:Show()
-        else         partyLabel:Hide() ; partyBox:Hide() ; partyHint:Hide() end
-    end
-    RefreshPartyText()
-    y = y - 30
+    -- local function RefreshPartyText()
+    --     local show = FishLustDB.animationStyle == "text"
+    --     if show then partyLabel:Show() ; partyBox:Show() ; partyHint:Show()
+    --     else         partyLabel:Hide() ; partyBox:Hide() ; partyHint:Hide() end
+    -- end
+    -- RefreshPartyText()
+    -- y = y - 30
 
     -- Sync all four radios + side effects
-    local function SetAnimStyle(style)
-        DjLustDB.animationStyle = style
-        animChipi:SetChecked(style == "chipi")
-        animPedro:SetChecked(style == "pedro")
-        animText:SetChecked(style == "text")
-        animNone:SetChecked(style == "none")
-        RefreshPartyText()
-        if addon.UpdateTheme then addon:UpdateTheme(style) end
-    end
-    animChipi:SetScript("OnClick", function() SetAnimStyle("chipi") end)
-    animPedro:SetScript("OnClick", function() SetAnimStyle("pedro") end)
-    animText:SetScript("OnClick",  function() SetAnimStyle("text")  end)
-    animNone:SetScript("OnClick",  function() SetAnimStyle("none")  end)
+    -- local function SetAnimStyle(style)
+    --     FishLustDB.animationStyle = style
+    --     animChipi:SetChecked(style == "chipi")
+    --     animPedro:SetChecked(style == "pedro")
+    --     animText:SetChecked(style == "text")
+    --     animNone:SetChecked(style == "none")
+    --     RefreshPartyText()
+    --     if addon.UpdateTheme then addon:UpdateTheme(style) end
+    -- end
+    -- animChipi:SetScript("OnClick", function() SetAnimStyle("chipi") end)
+    -- animPedro:SetScript("OnClick", function() SetAnimStyle("pedro") end)
+    -- animText:SetScript("OnClick",  function() SetAnimStyle("text")  end)
+    -- animNone:SetScript("OnClick",  function() SetAnimStyle("none")  end)
 
     -- Test / Stop animation buttons
-    Btn(25,  185, "Test Animation", function()
-        manualAnimActive = true
-        SlashCmdList["DJLANIM"]("start")
-    end)
-    Btn(220, 185, "Stop Animation", function()
-        manualAnimActive = false
-        SlashCmdList["DJLANIM"]("stop")
-    end)
-    y = y - 32
+    -- Btn(25,  185, "Test Animation", function()
+    --     manualAnimActive = true
+    --     SlashCmdList["DJLANIM"]("start")
+    -- end)
+    -- Btn(220, 185, "Stop Animation", function()
+    --     manualAnimActive = false
+    --     SlashCmdList["DJLANIM"]("stop")
+    -- end)
+    -- y = y - 32
 
-    -- Lock Position
-    local lockAnim = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
-    lockAnim:SetPoint("TOPLEFT", 25, y)
-    lockAnim.text:SetText("Lock Position")
-    lockAnim:SetChecked(DjLustDB.animationLocked)
-    lockAnim:SetScript("OnClick", function(self)
-        if addon.SetAnimationLocked then
-            addon:SetAnimationLocked(self:GetChecked())
-        else
-            DjLustDB.animationLocked = self:GetChecked()
-        end
-    end)
-    lockAnim:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine("|cff00bfffLock Animation Position|r")
-        GameTooltip:AddLine("Prevents accidental dragging.", 1, 1, 1, true)
-        GameTooltip:Show()
-    end)
-    lockAnim:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    f.uiElements.lockAnim = lockAnim
-    y = y - 30
+    -- -- Lock Position
+    -- local lockAnim = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
+    -- lockAnim:SetPoint("TOPLEFT", 25, y)
+    -- lockAnim.text:SetText("Lock Position")
+    -- lockAnim:SetChecked(FishLustDB.animationLocked)
+    -- lockAnim:SetScript("OnClick", function(self)
+    --     if addon.SetAnimationLocked then
+    --         addon:SetAnimationLocked(self:GetChecked())
+    --     else
+    --         FishLustDB.animationLocked = self:GetChecked()
+    --     end
+    -- end)
+    -- lockAnim:SetScript("OnEnter", function(self)
+    --     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    --     GameTooltip:AddLine("|cff00bfffLock Animation Position|r")
+    --     GameTooltip:AddLine("Prevents accidental dragging.", 1, 1, 1, true)
+    --     GameTooltip:Show()
+    -- end)
+    -- lockAnim:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    -- f.uiElements.lockAnim = lockAnim
+    -- y = y - 30
 
     -- Size slider
-    local sizeLabel = Label("Animation Size: " .. DjLustDB.animationSize .. " px")
-    y = y - 22
-    local sizeSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
-    sizeSlider:SetPoint("TOPLEFT", 25, y)
-    sizeSlider:SetWidth(380) ; sizeSlider:SetMinMaxValues(32, 512)
-    sizeSlider:SetValue(DjLustDB.animationSize) ; sizeSlider:SetValueStep(16)
-    sizeSlider:SetObeyStepOnDrag(true)
-    sizeSlider.Low:SetText("32") ; sizeSlider.High:SetText("512")
-    sizeSlider:SetScript("OnValueChanged", function(self, v)
-        v = math.floor(v / 16) * 16
-        DjLustDB.animationSize = v
-        sizeLabel:SetText("Animation Size: " .. v .. " px")
-        if _G["DjLustAnimFrame"] then _G["DjLustAnimFrame"]:SetSize(v, v) end
-    end)
-    f.uiElements.sizeSlider = sizeSlider
-    f.uiElements.sizeLabel  = sizeLabel
-    y = y - 32
+    -- local sizeLabel = Label("Animation Size: " .. FishLustDB.animationSize .. " px")
+    -- y = y - 22
+    -- local sizeSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
+    -- sizeSlider:SetPoint("TOPLEFT", 25, y)
+    -- sizeSlider:SetWidth(380) ; sizeSlider:SetMinMaxValues(32, 512)
+    -- sizeSlider:SetValue(FishLustDB.animationSize) ; sizeSlider:SetValueStep(16)
+    -- sizeSlider:SetObeyStepOnDrag(true)
+    -- sizeSlider.Low:SetText("32") ; sizeSlider.High:SetText("512")
+    -- sizeSlider:SetScript("OnValueChanged", function(self, v)
+    --     v = math.floor(v / 16) * 16
+    --     FishLustDB.animationSize = v
+    --     sizeLabel:SetText("Animation Size: " .. v .. " px")
+    --     if _G["FishLustAnimFrame"] then _G["FishLustAnimFrame"]:SetSize(v, v) end
+    -- end)
+    -- f.uiElements.sizeSlider = sizeSlider
+    -- f.uiElements.sizeLabel  = sizeLabel
+    -- y = y - 32
 
-    -- FPS slider
-    local fpsLabel = Label("Animation Speed: " .. DjLustDB.animationFPS .. " FPS")
-    y = y - 22
-    local fpsSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
-    fpsSlider:SetPoint("TOPLEFT", 25, y)
-    fpsSlider:SetWidth(380) ; fpsSlider:SetMinMaxValues(1, 30)
-    fpsSlider:SetValue(DjLustDB.animationFPS) ; fpsSlider:SetValueStep(1)
-    fpsSlider:SetObeyStepOnDrag(true)
-    fpsSlider.Low:SetText("1") ; fpsSlider.High:SetText("30")
-    fpsSlider:SetScript("OnValueChanged", function(self, v)
-        DjLustDB.animationFPS = v
-        fpsLabel:SetText("Animation Speed: " .. v .. " FPS")
-        if addon.UpdateAnimationFPS then addon:UpdateAnimationFPS(v) end
-    end)
-    f.uiElements.fpsSlider = fpsSlider
-    f.uiElements.fpsLabel  = fpsLabel
-    y = y - 36
+    -- -- FPS slider
+    -- local fpsLabel = Label("Animation Speed: " .. FishLustDB.animationFPS .. " FPS")
+    -- y = y - 22
+    -- local fpsSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
+    -- fpsSlider:SetPoint("TOPLEFT", 25, y)
+    -- fpsSlider:SetWidth(380) ; fpsSlider:SetMinMaxValues(1, 30)
+    -- fpsSlider:SetValue(FishLustDB.animationFPS) ; fpsSlider:SetValueStep(1)
+    -- fpsSlider:SetObeyStepOnDrag(true)
+    -- fpsSlider.Low:SetText("1") ; fpsSlider.High:SetText("30")
+    -- fpsSlider:SetScript("OnValueChanged", function(self, v)
+    --     FishLustDB.animationFPS = v
+    --     fpsLabel:SetText("Animation Speed: " .. v .. " FPS")
+    --     if addon.UpdateAnimationFPS then addon:UpdateAnimationFPS(v) end
+    -- end)
+    -- f.uiElements.fpsSlider = fpsSlider
+    -- f.uiElements.fpsLabel  = fpsLabel
+    -- y = y - 36
 
-    Sep()
+    -- Sep()
 
     -- ── SECTION: MUSIC ─────────────────────────────────────────────────────
     Header("Music")
@@ -378,21 +378,19 @@ local function CreateSettingsWindow()
     songNote:SetText("Song:")
     y = y - 20
 
-    local dropdown = CreateFrame("Frame", "DjLustSongDropdown", content, "UIDropDownMenuTemplate")
+    local dropdown = CreateFrame("Frame", "FishLustSongDropdown", content, "UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT", 25, y)
 
     local function GetAvailableSongs()
         local BUILTIN = {
-            { label = "Chipi Chipi (built-in)", path = "Interface\\AddOns\\DjLust\\chipilust.mp3" },
-            { label = "Pedro (built-in)",       path = "Interface\\AddOns\\DjLust\\pedrolust.mp3" },
+            { label = "I AM JUST A FISH", path = "Interface\\AddOns\\FishLust\\fish.mp3" },
         }
-        local songs = { { label = "(None / Default)", path = "" } }
         for _, e in ipairs(BUILTIN) do
             local ok, h = PlaySoundFile(e.path, "Master")
             if ok and h then table.insert(songs, e) ; StopSound(h) end
         end
-        if DjLustDB.savedSongs then
-            for _, entry in ipairs(DjLustDB.savedSongs) do
+        if FishLustDB.savedSongs then
+            for _, entry in ipairs(FishLustDB.savedSongs) do
                 table.insert(songs, { label = entry.name, path = entry.path })
             end
         end
@@ -405,14 +403,14 @@ local function CreateSettingsWindow()
         for _, e in ipairs(songs) do
             info.text    = e.label
             info.value   = e.path
-            info.checked = (DjLustDB.music == e.path) or
-                           (e.path == "" and DjLustDB.music == "")
+            info.checked = (FishLustDB.music == e.path) or
+                           (e.path == "" and FishLustDB.music == "")
             info.func = function()
-                DjLustDB.music = e.path
+                FishLustDB.music = e.path
                 UIDropDownMenu_SetText(dropdown, e.label)
                 if addon.UpdateMusic then addon:UpdateMusic(e.path) end
-                print("|cff00bfff[DjLust]|r Music: " ..
-                      (e.path == "" and "default (Chipi Chipi)" or e.label))
+                print("|cff00bfff[FishLust]|r Music: " ..
+                      (e.path == "" and "I AM JUST A FISH" or e.label))
             end
             UIDropDownMenu_AddButton(info, level)
         end
@@ -424,7 +422,7 @@ local function CreateSettingsWindow()
         local songs = GetAvailableSongs()
         local display = "(None / Default)"
         for _, e in ipairs(songs) do
-            if e.path == DjLustDB.music then display = e.label ; break end
+            if e.path == FishLustDB.music then display = e.label ; break end
         end
         UIDropDownMenu_SetText(dropdown, display)
     end
@@ -435,7 +433,7 @@ local function CreateSettingsWindow()
     addSongLabel:SetPoint("TOPLEFT", 25, y)
     addSongLabel:SetText("Add Song:")
 
-    local songSearchBox = CreateFrame("EditBox", "DjLustSongSearchBox", content, "InputBoxTemplate")
+    local songSearchBox = CreateFrame("EditBox", "FishLustSongSearchBox", content, "InputBoxTemplate")
     songSearchBox:SetPoint("TOPLEFT", 100, y + 2)
     songSearchBox:SetWidth(150)
     songSearchBox:SetHeight(22)
@@ -465,14 +463,14 @@ local function CreateSettingsWindow()
 
     -- ── ConfirmRemove popup helper ─────────────────────────────────────────
     local function ConfirmRemove(capPath, capName)
-        StaticPopup_Show("DJLUST_CONFIRM_REMOVE", capName, nil, {
+        StaticPopup_Show("FishLust_CONFIRM_REMOVE", capName, nil, {
             path   = capPath,
             name   = capName,
             onDone = function()
                 addStatus:SetText("|cffff8800Removed: " .. capName .. "|r")
                 UIDropDownMenu_Initialize(dropdown, InitDropdown)
-                if DjLustDB.music == capPath then
-                    DjLustDB.music = ""
+                if FishLustDB.music == capPath then
+                    FishLustDB.music = ""
                     UIDropDownMenu_SetText(dropdown, "(None / Default)")
                     if addon.UpdateMusic then addon:UpdateMusic("") end
                 end
@@ -482,17 +480,17 @@ local function CreateSettingsWindow()
 
     -- ── Remove button — acts on current dropdown selection ─────────────────
     songRemoveSelBtn:SetScript("OnClick", function()
-        local selPath = DjLustDB.music
+        local selPath = FishLustDB.music
         if not selPath or selPath == "" then
             addStatus:SetText("|cffff6600Select a custom song in the dropdown first.|r")
             return
         end
-        if selPath:find("Interface\\AddOns\\DjLust\\", 1, true) then
+        if selPath:find("Interface\\AddOns\\FishLust\\", 1, true) then
             addStatus:SetText("|cffff6600Built-in songs cannot be removed.|r")
             return
         end
         local found
-        for _, e in ipairs(DjLustDB.savedSongs or {}) do
+        for _, e in ipairs(FishLustDB.savedSongs or {}) do
             if e.path == selPath then found = e ; break end
         end
         if not found then
@@ -514,14 +512,14 @@ local function CreateSettingsWindow()
         local ok, h = PlaySoundFile(path, "Master")
         if ok then
             if h then StopSound(h) end
-            DjLustDB.savedSongs = DjLustDB.savedSongs or {}
-            for _, e in ipairs(DjLustDB.savedSongs) do
+            FishLustDB.savedSongs = FishLustDB.savedSongs or {}
+            for _, e in ipairs(FishLustDB.savedSongs) do
                 if e.path == path then
                     addStatus:SetText("|cffff6600Already in library: " .. filename .. "|r")
                     return
                 end
             end
-            table.insert(DjLustDB.savedSongs, { name = filename, path = path })
+            table.insert(FishLustDB.savedSongs, { name = filename, path = path })
             songSearchBox:SetText("")
             addStatus:SetText("|cff00ff00Added: " .. filename .. "|r")
             UIDropDownMenu_Initialize(dropdown, InitDropdown)
@@ -540,16 +538,16 @@ local function CreateSettingsWindow()
     end)
 
     -- ── Volume slider
-    local volumeLabel = Label("Volume: " .. math.floor(DjLustDB.volume * 100) .. "%")
+    local volumeLabel = Label("Volume: " .. math.floor(FishLustDB.volume * 100) .. "%")
     y = y - 22
     local volumeSlider = CreateFrame("Slider", nil, content, "OptionsSliderTemplate")
     volumeSlider:SetPoint("TOPLEFT", 25, y)
     volumeSlider:SetWidth(380) ; volumeSlider:SetMinMaxValues(0, 1)
-    volumeSlider:SetValue(DjLustDB.volume) ; volumeSlider:SetValueStep(0.05)
+    volumeSlider:SetValue(FishLustDB.volume) ; volumeSlider:SetValueStep(0.05)
     volumeSlider:SetObeyStepOnDrag(true)
     volumeSlider.Low:SetText("0%") ; volumeSlider.High:SetText("100%")
     volumeSlider:SetScript("OnValueChanged", function(self, v)
-        DjLustDB.volume = v
+        FishLustDB.volume = v
         volumeLabel:SetText("Volume: " .. math.floor(v * 100) .. "%")
         if addon.UpdateVolume then addon:UpdateVolume(v) end
     end)
@@ -574,14 +572,14 @@ local function CreateSettingsWindow()
         local radio = CreateFrame("CheckButton", nil, content, "UIRadioButtonTemplate")
         radio:SetPoint("TOPLEFT", 35 + col * colW, y - row * 22)
         radio.text:SetText(ch)
-        radio:SetChecked(DjLustDB.soundChannel == ch)
+        radio:SetChecked(FishLustDB.soundChannel == ch)
         local cap = ch
         radio:SetScript("OnClick", function()
-            DjLustDB.soundChannel = cap
+            FishLustDB.soundChannel = cap
             for _, r in pairs(channelRadios) do r:SetChecked(false) end
             radio:SetChecked(true)
             if addon.SetSoundChannel then addon:SetSoundChannel(cap) end
-            print("|cff00bfff[DjLust]|r Sound channel: |cffff8800" .. cap .. "|r")
+            print("|cff00bfff[FishLust]|r Sound channel: |cffff8800" .. cap .. "|r")
         end)
         channelRadios[ch] = radio
     end
@@ -592,10 +590,10 @@ local function CreateSettingsWindow()
     local muteCheck = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
     muteCheck:SetPoint("TOPLEFT", 25, y)
     muteCheck.text:SetText("Mute Sound (animation still plays)")
-    muteCheck:SetChecked(DjLustDB.muteSound)
+    muteCheck:SetChecked(FishLustDB.muteSound)
     muteCheck:SetScript("OnClick", function(self)
         if addon.SetMuteSound then addon:SetMuteSound(self:GetChecked())
-        else DjLustDB.muteSound = self:GetChecked() end
+        else FishLustDB.muteSound = self:GetChecked() end
     end)
     f.uiElements.muteCheck = muteCheck
     y = y - 32
@@ -606,7 +604,7 @@ local function CreateSettingsWindow()
     end)
     Btn(220, 185, "Stop Music", function()
         if addon.StopMusic then addon:StopMusic()
-        else SlashCmdList["DJLUST"]("stop") end
+        else SlashCmdList["FishLust"]("stop") end
     end)
     y = y - 32
 
@@ -639,17 +637,17 @@ local function CreateSettingsWindow()
 
     Btn(25, 185, "Chipi Chipi Profile", function()
         SetAnimStyle("chipi")
-        DjLustDB.music = "Interface\\AddOns\\DjLust\\chipilust.mp3"
-        if addon.UpdateMusic then addon:UpdateMusic(DjLustDB.music) end
+        FishLustDB.music = "Interface\\AddOns\\FishLust\\chipilust.mp3"
+        if addon.UpdateMusic then addon:UpdateMusic(FishLustDB.music) end
         UIDropDownMenu_SetText(dropdown, "Chipi Chipi (built-in)")
-        print("|cff00bfff[DjLust]|r Profile: |cffff1493Chipi Chipi|r")
+        print("|cff00bfff[FishLust]|r Profile: |cffff1493Chipi Chipi|r")
     end)
     Btn(220, 185, "Pedro Profile", function()
         SetAnimStyle("pedro")
-        DjLustDB.music = "Interface\\AddOns\\DjLust\\pedrolust.mp3"
-        if addon.UpdateMusic then addon:UpdateMusic(DjLustDB.music) end
+        FishLustDB.music = "Interface\\AddOns\\FishLust\\pedrolust.mp3"
+        if addon.UpdateMusic then addon:UpdateMusic(FishLustDB.music) end
         UIDropDownMenu_SetText(dropdown, "Pedro (built-in)")
-        print("|cff00bfff[DjLust]|r Profile: |cff00ff00Pedro|r")
+        print("|cff00bfff[FishLust]|r Profile: |cff00ff00Pedro|r")
     end)
     y = y - 36
 
@@ -661,21 +659,21 @@ local function CreateSettingsWindow()
     local minimapCheck = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
     minimapCheck:SetPoint("TOPLEFT", 25, y)
     minimapCheck.text:SetText("Show Minimap Button")
-    minimapCheck:SetChecked(not DjLustDB.minimap.hide)
+    minimapCheck:SetChecked(not FishLustDB.minimap.hide)
     minimapCheck:SetScript("OnClick", function(self)
         local show = self:GetChecked()
-        DjLustDB.minimap.hide = not show
-        local btn = _G["DjLust_MinimapButton"]
+        FishLustDB.minimap.hide = not show
+        local btn = _G["FishLust_MinimapButton"]
         if show then
             if btn then btn:Show() ; btn:SetAlpha(btn.snapped and 0.01 or 1)
             elseif addon.CreateMinimapButton then addon.CreateMinimapButton() end
-            print("|cff00bfff[DjLust]|r Minimap button |cff00ff00shown|r.")
+            print("|cff00bfff[FishLust]|r Minimap button |cff00ff00shown|r.")
         else
             if btn then btn:Hide() end
-            print("|cff00bfff[DjLust]|r Minimap button |cffff0000hidden|r.")
+            print("|cff00bfff[FishLust]|r Minimap button |cffff0000hidden|r.")
         end
-        if _G["DjLustOptionsMinimapCheck"] then
-            _G["DjLustOptionsMinimapCheck"]:SetChecked(show)
+        if _G["FishLustOptionsMinimapCheck"] then
+            _G["FishLustOptionsMinimapCheck"]:SetChecked(show)
         end
     end)
     f.uiElements.minimapCheck = minimapCheck
@@ -689,30 +687,30 @@ local function CreateSettingsWindow()
     local debugCheck = CreateFrame("CheckButton", nil, content, "UICheckButtonTemplate")
     debugCheck:SetPoint("TOPLEFT", 25, y)
     debugCheck.text:SetText("Enable Debug Output")
-    debugCheck:SetChecked(DjLustDB.debugMode)
+    debugCheck:SetChecked(FishLustDB.debugMode)
     debugCheck:SetScript("OnClick", function(self)
-        DjLustDB.debugMode = self:GetChecked()
-        SlashCmdList["DJLUST"]("debug " .. (DjLustDB.debugMode and "on" or "off"))
+        FishLustDB.debugMode = self:GetChecked()
+        SlashCmdList["FishLust"]("debug " .. (FishLustDB.debugMode and "on" or "off"))
     end)
     f.uiElements.debugCheck = debugCheck
     y = y - 32
 
     Btn(25, 190, "Reset Anim Position", function()
-        local af = _G["DjLustAnimFrame"]
+        local af = _G["FishLustAnimFrame"]
         if af then
-            if DjLustDB.animationLocked then
+            if FishLustDB.animationLocked then
                 if addon.SetAnimationLocked then addon:SetAnimationLocked(false) end
-                DjLustDB.animationLocked = false
+                FishLustDB.animationLocked = false
                 if f.uiElements.lockAnim then f.uiElements.lockAnim:SetChecked(false) end
             end
             af:ClearAllPoints()
             af:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-            DjLustDB.animationX, DjLustDB.animationY = 0, 0
-            print("|cff00bfff[DjLust]|r Animation position reset to center")
+            FishLustDB.animationX, FishLustDB.animationY = 0, 0
+            print("|cff00bfff[FishLust]|r Animation position reset to center")
         end
     end)
     Btn(225, 175, "Reset Detection", function()
-        SlashCmdList["DJLUST"]("reset")
+        SlashCmdList["FishLust"]("reset")
     end)
     y = y - 36
 
@@ -721,7 +719,7 @@ local function CreateSettingsWindow()
 
     local info = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     info:SetPoint("BOTTOM", 0, 12)
-    info:SetText("|cff606060Drag animation to reposition (when unlocked) | /djlust for all commands|r")
+    info:SetText("|cff606060Drag animation to reposition (when unlocked) | /FishLust for all commands|r")
 
     f:Hide()
     settingsFrame = f
@@ -732,7 +730,7 @@ end
 -- Public API
 --------------------------------------------------
 function addon:ToggleSettings()
-    local f = _G["DjLustSettingsFrame"] or CreateSettingsWindow()
+    local f = _G["FishLustSettingsFrame"] or CreateSettingsWindow()
     if f:IsShown() then
         f:Hide()
     else
@@ -743,14 +741,14 @@ function addon:ToggleSettings()
 end
 
 function addon:ShowSettings()
-    local f = _G["DjLustSettingsFrame"] or CreateSettingsWindow()
+    local f = _G["FishLustSettingsFrame"] or CreateSettingsWindow()
     EnsureDBDefaults()
     UpdateUIValues(f)
     f:Show()
 end
 
 function addon:HideSettings()
-    local f = _G["DjLustSettingsFrame"]
+    local f = _G["FishLustSettingsFrame"]
     if f then
         manualAnimActive = false
         f:Hide()
@@ -762,7 +760,7 @@ end
 --------------------------------------------------
 local function RegisterOptionsPanel()
     local panel = CreateFrame("Frame")
-    panel.name  = "DjLust"
+    panel.name  = "FishLust"
 
     local LX, RX, CMDX, W = 16, 300, 220, 550
     local py = 0
@@ -781,28 +779,28 @@ local function RegisterOptionsPanel()
     end
 
     Skip(16)
-    Fs("GameFontNormalLarge", "|cff00bfffDjLust|r")
+    Fs("GameFontNormalLarge", "|cff00bfffFishLust|r")
     Skip(22)
     Fs("GameFontHighlightSmall",
        "Plays music and animation when Bloodlust / Heroism is detected via aura events.")
     Skip(14) ; Div() ; Skip(4) ; Skip(12)
 
-    local check = CreateFrame("CheckButton", "DjLustOptionsMinimapCheck", panel,
+    local check = CreateFrame("CheckButton", "FishLustOptionsMinimapCheck", panel,
                               "InterfaceOptionsCheckButtonTemplate")
     check:SetPoint("TOPLEFT", panel, "TOPLEFT", LX - 2, py + 2)
     check.Text:SetText("Show Minimap Button")
-    check.tooltipText = "Show or hide the DjLust minimap icon."
+    check.tooltipText = "Show or hide the FishLust minimap icon."
     check:SetScript("OnClick", function(self)
         local show = self:GetChecked()
-        DjLustDB.minimap.hide = not show
-        local mb = _G["DjLust_MinimapButton"]
+        FishLustDB.minimap.hide = not show
+        local mb = _G["FishLust_MinimapButton"]
         if show then
             if mb then mb:Show() ; mb:SetAlpha(mb.snapped and 0.01 or 1)
             elseif addon.CreateMinimapButton then addon.CreateMinimapButton() end
         else
             if mb then mb:Hide() end
         end
-        local sw = _G["DjLustSettingsFrame"]
+        local sw = _G["FishLustSettingsFrame"]
         if sw and sw.uiElements and sw.uiElements.minimapCheck then
             sw.uiElements.minimapCheck:SetChecked(show)
         end
@@ -811,7 +809,7 @@ local function RegisterOptionsPanel()
     local openBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     openBtn:SetSize(190, 26)
     openBtn:SetPoint("TOPLEFT", panel, "TOPLEFT", RX, py)
-    openBtn:SetText("Open DjLust Settings")
+    openBtn:SetText("Open FishLust Settings")
     openBtn:SetScript("OnClick", function()
         HideUIPanel(SettingsPanel or InterfaceOptionsFrame)
         addon:ShowSettings()
@@ -822,14 +820,14 @@ local function RegisterOptionsPanel()
     Skip(18)
 
     local COMMANDS = {
-        { "/djlust",                "Show all available commands"             },
-        { "/djlust settings",       "Open the settings window"                },
-        { "/djlust test",           "Test music and animation"                },
-        { "/djlust stop",           "Stop music and animation"                },
-        { "/djlust status",         "Show detection status"                   },
-        { "/djlust reset",          "Reset detection state"                   },
-        { "/djlust volume <0-100>", "Set volume (e.g. /djlust volume 80)"     },
-        { "/djlust minimap",        "Toggle minimap button"                   },
+        { "/FishLust",                "Show all available commands"             },
+        { "/FishLust settings",       "Open the settings window"                },
+        { "/FishLust test",           "Test music and animation"                },
+        { "/FishLust stop",           "Stop music and animation"                },
+        { "/FishLust status",         "Show detection status"                   },
+        { "/FishLust reset",          "Reset detection state"                   },
+        { "/FishLust volume <0-100>", "Set volume (e.g. /FishLust volume 80)"     },
+        { "/FishLust minimap",        "Toggle minimap button"                   },
         { "/djlanim lock",          "Lock animation position"                 },
         { "/djlanim unlock",        "Unlock animation position"               },
     }
@@ -883,12 +881,12 @@ local function RegisterOptionsPanel()
     Fs("GameFontHighlightSmall", "|cffff8800 Issues | Bugs | Feedback -> Use GitHub:|r", LX)
     Fs("GameFontHighlightSmall", "|cffff8800 Seems Good Community:|r", RX)
     Skip(16)
-    Fs("GameFontHighlightSmall", "|cff00bfffhttps://github.com/Jeremy-Gstein/DjLust|r", LX + 4)
+    Fs("GameFontHighlightSmall", "|cff00bfffhttps://github.com/Jeremy-Gstein/FishLust|r", LX + 4)
     Fs("GameFontHighlightSmall", "|cff00bfffhttps://seemsgood.org|r", RX + 4)
 
     panel:SetScript("OnShow", function()
         EnsureDBDefaults()
-        check:SetChecked(not DjLustDB.minimap.hide)
+        check:SetChecked(not FishLustDB.minimap.hide)
     end)
 
     if Settings and Settings.RegisterCanvasLayoutCategory then
@@ -916,19 +914,19 @@ loadFrame:SetScript("OnEvent", function(self, event, loadedAddon)
     C_Timer.After(0.1, function()
         EnsureDBDefaults()
         RegisterOptionsPanel()
-        if DjLustDB.debugMode then
+        if FishLustDB.debugMode then
             C_Timer.After(0.2, function()
-                if SlashCmdList["DJLUST"] then
-                    SlashCmdList["DJLUST"]("debug on")
+                if SlashCmdList["FishLust"] then
+                    SlashCmdList["FishLust"]("debug on")
                 end
             end)
         end
     end)
 
     C_Timer.After(0.2, function()
-        if SlashCmdList["DJLUST"] then
-            local orig = SlashCmdList["DJLUST"]
-            SlashCmdList["DJLUST"] = function(msg)
+        if SlashCmdList["FishLust"] then
+            local orig = SlashCmdList["FishLust"]
+            SlashCmdList["FishLust"] = function(msg)
                 if msg == "settings" or msg == "config" or msg == "options" then
                     addon:ToggleSettings()
                 else

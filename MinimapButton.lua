@@ -1,4 +1,4 @@
--- MinimapButton.lua: Minimap button for DjLust
+-- MinimapButton.lua: Minimap button for FishLust
 -- Ported from AccountPlayed minimap system:
 --   - Fade in/out on hover (invisible at edge until mouse-over)
 --   - Lock/unlock via right-click (prevents accidental dragging)
@@ -13,43 +13,43 @@
 
 local addonName, addon = ...
 
-local BUTTON_NAME = "DjLust_MinimapButton"
+local BUTTON_NAME = "FishLust_MinimapButton"
 
 --------------------------------------------------
 -- DB Init
 --------------------------------------------------
 local function InitDB()
-    if not DjLustDB then
-        DjLustDB = {}
+    if not FishLustDB then
+        FishLustDB = {}
     end
 
-    if not DjLustDB.minimap then
-        DjLustDB.minimap = {}
+    if not FishLustDB.minimap then
+        FishLustDB.minimap = {}
     end
 
     -- Migrate: if old angle-based data exists, convert to x,y
-    if DjLustDB.minimap.angle and not DjLustDB.minimap.x then
-        local angle = math.rad(DjLustDB.minimap.angle)
+    if FishLustDB.minimap.angle and not FishLustDB.minimap.x then
+        local angle = math.rad(FishLustDB.minimap.angle)
         local radius = 105
-        DjLustDB.minimap.x = math.cos(angle) * radius
-        DjLustDB.minimap.y = math.sin(angle) * radius
-        DjLustDB.minimap.angle = nil
+        FishLustDB.minimap.x = math.cos(angle) * radius
+        FishLustDB.minimap.y = math.sin(angle) * radius
+        FishLustDB.minimap.angle = nil
     end
 
     -- Default position: bottom-left of minimap (225 degrees)
-    if not DjLustDB.minimap.x then
+    if not FishLustDB.minimap.x then
         local angle = math.rad(225)
         local radius = 105
-        DjLustDB.minimap.x = math.cos(angle) * radius
-        DjLustDB.minimap.y = math.sin(angle) * radius
+        FishLustDB.minimap.x = math.cos(angle) * radius
+        FishLustDB.minimap.y = math.sin(angle) * radius
     end
 
-    if DjLustDB.minimap.hide == nil then
-        DjLustDB.minimap.hide = false
+    if FishLustDB.minimap.hide == nil then
+        FishLustDB.minimap.hide = false
     end
 
-    if DjLustDB.minimap.locked == nil then
-        DjLustDB.minimap.locked = false
+    if FishLustDB.minimap.locked == nil then
+        FishLustDB.minimap.locked = false
     end
 end
 
@@ -57,8 +57,8 @@ end
 -- Positioning
 --------------------------------------------------
 local function UpdateButtonPosition(button)
-    local x = DjLustDB.minimap.x or 0
-    local y = DjLustDB.minimap.y or 0
+    local x = FishLustDB.minimap.x or 0
+    local y = FishLustDB.minimap.y or 0
     button:ClearAllPoints()
     button:SetPoint("CENTER", Minimap, "CENTER", x, y)
 end
@@ -84,7 +84,7 @@ end
 -- Creation
 --------------------------------------------------
 local function CreateMinimapButton()
-    if DjLustDB.minimap.hide then return end
+    if FishLustDB.minimap.hide then return end
 
     if _G[BUTTON_NAME] then
         UpdateButtonPosition(_G[BUTTON_NAME])
@@ -128,24 +128,24 @@ local function CreateMinimapButton()
     -- Tooltip + Hover Fade
     --------------------------------------------------
     btn:SetScript("OnEnter", function(self)
-        if DjLustDB.minimap.hide then return end
+        if FishLustDB.minimap.hide then return end
 
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("|cff00bfffDjLust|r", 1, 1, 1)
+        GameTooltip:AddLine("|cff00bfffFishLust|r", 1, 1, 1)
         GameTooltip:AddLine(" ")
         GameTooltip:AddDoubleLine("|cffff8800Left Click:|r",  "|cff00ff00Open Settings|r")
-        if not DjLustDB.minimap.locked then
+        if not FishLustDB.minimap.locked then
             GameTooltip:AddDoubleLine("|cffff8800Drag:|r", "|cffffff00Move Icon|r")
         end
         GameTooltip:AddDoubleLine("|cffff8800Right Click:|r", "|cffff8800Lock / Unlock|r")
         GameTooltip:AddLine(" ")
-        local lockStatus = DjLustDB.minimap.locked
+        local lockStatus = FishLustDB.minimap.locked
             and "|cffff0000[Locked]|r"
             or  "|cff00ff00[Unlocked]|r"
         GameTooltip:AddLine(lockStatus, 1, 1, 1)
         GameTooltip:Show()
 
-        if self.snapped and not DjLustDB.minimap.hide then
+        if self.snapped and not FishLustDB.minimap.hide then
             FadeButton(self, 1, 0.15)
         end
     end)
@@ -161,7 +161,7 @@ local function CreateMinimapButton()
     -- Minimap edge hover (reveal button on approach)
     --------------------------------------------------
     Minimap:HookScript("OnEnter", function()
-        if not btn.isDragging and btn.snapped and not DjLustDB.minimap.hide then
+        if not btn.isDragging and btn.snapped and not FishLustDB.minimap.hide then
             FadeButton(btn, 1, 0.15)
         end
     end)
@@ -179,17 +179,17 @@ local function CreateMinimapButton()
         if button == "LeftButton" then
             if addon and addon.ToggleSettings then
                 addon:ToggleSettings()
-            elseif SlashCmdList["DJLUST"] then
-                SlashCmdList["DJLUST"]("settings")
+            elseif SlashCmdList["FishLust"] then
+                SlashCmdList["FishLust"]("settings")
             end
 
         elseif button == "RightButton" then
-            DjLustDB.minimap.locked = not DjLustDB.minimap.locked
-            local state = DjLustDB.minimap.locked
+            FishLustDB.minimap.locked = not FishLustDB.minimap.locked
+            local state = FishLustDB.minimap.locked
             PlaySound(state and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
                               or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
             print(string.format(
-                "|cff00bfff[DjLust]|r Minimap button %s",
+                "|cff00bfff[FishLust]|r Minimap button %s",
                 state and "|cffff0000locked|r" or "|cff00ff00unlocked|r"
             ))
             -- Refresh tooltip
@@ -203,8 +203,8 @@ local function CreateMinimapButton()
     -- Drag (cached values, respects lock)
     --------------------------------------------------
     btn:SetScript("OnDragStart", function(self)
-        if DjLustDB.minimap.locked then
-            print("|cff00bfff[DjLust]|r Minimap button is locked. Right-click to unlock.")
+        if FishLustDB.minimap.locked then
+            print("|cff00bfff[FishLust]|r Minimap button is locked. Right-click to unlock.")
             return
         end
 
@@ -244,8 +244,8 @@ local function CreateMinimapButton()
                 dy = dy * factor
             end
 
-            DjLustDB.minimap.x = dx
-            DjLustDB.minimap.y = dy
+            FishLustDB.minimap.x = dx
+            FishLustDB.minimap.y = dy
             self:ClearAllPoints()
             self:SetPoint("CENTER", minimap, "CENTER", dx, dy)
         end)
@@ -278,7 +278,7 @@ local function CreateMinimapButton()
     -- Initial state
     --------------------------------------------------
     local edgeRadius = (Minimap:GetWidth() + btn:GetWidth()) / 2
-    local savedDist  = (DjLustDB.minimap.x ^ 2 + DjLustDB.minimap.y ^ 2) ^ 0.5
+    local savedDist  = (FishLustDB.minimap.x ^ 2 + FishLustDB.minimap.y ^ 2) ^ 0.5
     btn.snapped = (savedDist <= edgeRadius + btn:GetWidth() * 0.3)
 
     -- Snapped: invisible until hovered. Free: always visible.
@@ -286,7 +286,7 @@ local function CreateMinimapButton()
 
     UpdateButtonPosition(btn)
 
-    if DjLustDB.minimap.hide then
+    if FishLustDB.minimap.hide then
         btn:Hide()
     end
 
@@ -294,15 +294,15 @@ local function CreateMinimapButton()
 end
 
 --------------------------------------------------
--- Reset (called by /djlust reset minimap)
+-- Reset (called by /FishLust reset minimap)
 --------------------------------------------------
 function addon.ResetMinimapButton()
     local angle  = math.rad(225)
     local radius = 105
-    DjLustDB.minimap.x      = math.cos(angle) * radius
-    DjLustDB.minimap.y      = math.sin(angle) * radius
-    DjLustDB.minimap.hide   = false
-    DjLustDB.minimap.locked = false
+    FishLustDB.minimap.x      = math.cos(angle) * radius
+    FishLustDB.minimap.y      = math.sin(angle) * radius
+    FishLustDB.minimap.hide   = false
+    FishLustDB.minimap.locked = false
 
     local btn = _G[BUTTON_NAME]
     if btn then
@@ -312,11 +312,11 @@ function addon.ResetMinimapButton()
         btn:Show()
         btn:SetAlpha(0.01)
         UpdateButtonPosition(btn)
-        print("|cff00bfff[DjLust]|r Minimap button reset to default position.")
+        print("|cff00bfff[FishLust]|r Minimap button reset to default position.")
     else
         -- Button was hidden, recreate it
         CreateMinimapButton()
-        print("|cff00bfff[DjLust]|r Minimap button restored.")
+        print("|cff00bfff[FishLust]|r Minimap button restored.")
     end
 end
 
@@ -328,39 +328,39 @@ addon.CreateMinimapButton = CreateMinimapButton
 --------------------------------------------------
 local originalSlashHandler
 local function HookSlashCommand()
-    if not SlashCmdList["DJLUST"] then
+    if not SlashCmdList["FishLust"] then
         C_Timer.After(0.5, HookSlashCommand)
         return
     end
 
-    originalSlashHandler = SlashCmdList["DJLUST"]
-    SlashCmdList["DJLUST"] = function(msg)
+    originalSlashHandler = SlashCmdList["FishLust"]
+    SlashCmdList["FishLust"] = function(msg)
         if msg == "minimap" then
-            DjLustDB.minimap.hide = not DjLustDB.minimap.hide
+            FishLustDB.minimap.hide = not FishLustDB.minimap.hide
             local btn = _G[BUTTON_NAME]
             if btn then
-                if DjLustDB.minimap.hide then
+                if FishLustDB.minimap.hide then
                     btn:Hide()
-                    print("|cff00bfff[DjLust]|r Minimap button hidden.")
+                    print("|cff00bfff[FishLust]|r Minimap button hidden.")
                 else
                     btn:Show()
                     btn:SetAlpha(btn.snapped and 0.01 or 1)
-                    print("|cff00bfff[DjLust]|r Minimap button shown.")
+                    print("|cff00bfff[FishLust]|r Minimap button shown.")
                 end
             else
                 -- Was never created (hidden on load), create it now
-                if not DjLustDB.minimap.hide then
+                if not FishLustDB.minimap.hide then
                     CreateMinimapButton()
                 end
             end
         elseif msg == "minimap reset" then
             addon.ResetMinimapButton()
         elseif msg == "minimap lock" then
-            DjLustDB.minimap.locked = true
-            print("|cff00bfff[DjLust]|r Minimap button |cffff0000locked|r.")
+            FishLustDB.minimap.locked = true
+            print("|cff00bfff[FishLust]|r Minimap button |cffff0000locked|r.")
         elseif msg == "minimap unlock" then
-            DjLustDB.minimap.locked = false
-            print("|cff00bfff[DjLust]|r Minimap button |cff00ff00unlocked|r.")
+            FishLustDB.minimap.locked = false
+            print("|cff00bfff[FishLust]|r Minimap button |cff00ff00unlocked|r.")
         else
             originalSlashHandler(msg)
         end
